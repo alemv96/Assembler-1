@@ -24,6 +24,9 @@ includelib \Irvine\User32.lib
 	tamMemCache DWORD ?
 	tamBloque DWORD ?
 	promptBad BYTE "Invalid input, please enter again"
+	buffer BYTE "3"
+	bufsize = ($ - buffer)
+	decval DWORD ?
 	ExitProcess PROTO , dwExitCode: DWORD
  .code 
  
@@ -47,6 +50,13 @@ includelib \Irvine\User32.lib
 
 	opcion1:
 		CALL Clrscr
+		mov   edx, OFFSET buffer
+		mov   ecx, bufsize
+		CALL  toBinary
+		mov   decval, EAX
+		mov EAX, decval
+		CALL WriteBin
+
 		CALL memPrincipal
 		CALL memCache
 		CALL bloque
@@ -156,34 +166,145 @@ includelib \Irvine\User32.lib
 	memCache PROC near
 		CALL inDataUser
 		cmp EAX, 1
-			mov tamMemCache, 6
+			JE _6
 		cmp EAX, 2
-			mov tamMemCache, 7
+			JE _7
 		cmp EAX, 3
-			mov tamMemCache, 8
+			JE _8
 		cmp EAX, 4
-			mov tamMemCache, 9
+			JE _9
 		cmp EAX, 5
+			JE_10
+		_6 :
+			mov tamMemCache, 6
+			ret
+		_7 :
+			mov tamMemCache, 7
+			ret
+		_8 :
+			mov tamMemCache, 8
+			ret
+		_9 :
+			mov tamMemCache, 9
+			ret
+		_10 :
 			mov tamMemCache, 10
+			ret
+
 	ret
 	memCache ENDP
 
 	bloque PROC near
 		CALL inDataUser
 		cmp EAX, 1
-			mov tamBloque, 1
+			JE _1
 		cmp EAX, 2
-			mov tamBloque, 2
+			JE _2
 		cmp EAX, 3
-			mov tamBloque, 3
+			JE _3 
 		cmp EAX, 4
-			mov tamBloque, 4
+			JE _4 
 		cmp EAX, 5
+			JE _5 
+		_1:
+			mov tamBloque, 1
+				ret 
+		_2:
+			mov tamBloque, 2
+				ret 
+		_3:
+			mov tamBloque, 3
+				ret 
+		_4:
+			mov tamBloque, 4
+				ret
+		_5:
 			mov tamBloque, 5
-		ret
+			ret
 	bloque ENDP
 
 	getSizes PROC near
 	ret
 	getSizes ENDP
+
+
+toBinary PROC near USES ebx ecx edx esi
+LOCAL saveDigit : DWORD
+;
+			; Converts(parses) a string containing an unsigned decimal
+				; integer, and converts it to binary.All valid digits occurring
+				; before a non - numeric character are converted.
+				; Leading spaces are ignored.
+
+				; Receives: EDX = offset of string, ECX = length
+				; Returns:
+			;  If the integer is blank, EAX = 0 and CF = 1
+				;  If the integer contains only spaces, EAX = 0 and CF = 1
+				;  If the integer is larger than 2 ^ 32 - 1, EAX = 0 and CF = 1
+				;  Otherwise, EAX = converted integer, and CF = 0
+				;
+			; Created 7 / 15 / 05 (from the old ReadDec procedure)
+				; --------------------------------------------------------
+
+				mov   esi, edx; save offset in ESI
+
+				cmp   ecx, 0; length greater than zero ?
+				jne   L1; yes: continue
+				mov   eax, 0; no: set return value
+				jmp   L5; and exit with CF = 1
+
+				; Skip over leading spaces, tabs
+
+			L1 : mov   al, [esi]; get a character from buffer
+				 cmp   al, ' '; space character found ?
+				 je	L1A; yes: skip it
+				 cmp	al, TAB; TAB found ?
+				 je	L1A; yes: skip it
+				 jmp   L2; no: goto next step
+
+			 L1A :
+			inc   esi; yes: point to next char
+				loop  L1; continue searching until end of string
+				jmp   L5; exit with CF = 1 if all spaces
+
+				; Replaced code(7 / 19 / 05)-------------------------------------------- -
+				; L1:mov   al, [esi]; get a character from buffer
+				;	cmp   al, ' '; space character found ?
+				;	jne   L2; no: goto next step
+				;	inc   esi; yes: point to next char
+				;	loop  L1; all spaces ?
+				;	jmp   L5; yes: exit with CF = 1
+				; -------------------------------------------------------------------- -
+
+				; Start to convert the number.
+
+			L2:	mov  eax, 0; clear accumulator
+				mov  ebx, 10; EBX is the divisor
+
+				; Repeat loop for each digit.
+
+			L3:	mov  dl, [esi]; get character from buffer
+				cmp  dl, '0'; character < '0' ?
+				jb   L4
+				cmp  dl, '9'; character > '9' ?
+				ja   L4
+				and  edx, 0Fh; no: convert to binary
+
+				mov  saveDigit, edx
+				mul  ebx; EDX:EAX = EAX * EBX
+				jc   L5; quit if Carry(EDX > 0)
+				mov  edx, saveDigit
+				add  eax, edx; add new digit to sum
+				jc   L5; quit if Carry generated
+				inc  esi; point to next digit
+				jmp  L3; get next digit
+
+			L4 : clc; succesful completion(CF = 0)
+				 jmp  L6
+
+			 L5 : mov  eax, 0; clear result to zero
+				  stc; signal an error(CF = 1)
+
+			  L6:	ret
+					toBinary ENDP
 END main
