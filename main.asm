@@ -19,6 +19,10 @@ includelib \Irvine\User32.lib
     "1. Modulo 1: Ubicacion de bloques",  0dh, 0ah ,
     "2. Modulo 2: Simulador de reemplazo de bloques",  0dh, 0ah ,
 	"3. SALIR" , 0dh, 0ah , 0
+	salto BYTE".", 0dh, 0ah, 0
+	ingMemPrincipal BYTE "Ingrese tamaño de la memoria Principal", 0dh, 0ah, 0
+	ingMemCache BYTE "Ingrese tamaño de la memoria Cache", 0dh, 0ah, 0
+	ingBloque BYTE "Ingrese tamaño del Bloque", 0dh, 0ah, 0
 	entry_Data DWORD ?
 	tamMemoriaPrincipal DWORD ?
 	tamMemCache DWORD ?
@@ -27,9 +31,9 @@ includelib \Irvine\User32.lib
 	lineValue DWORD ? 
 	byteValue DWORD ?
 	promptBad BYTE "Invalid input, please enter again", 0
-	Ttag BYTE " Tag = ",0
-	Tline BYTE "Line = ",0
-	TamByte BYTE " Byte = ",0
+	Ttag BYTE " Tag = ", 0
+	Tline BYTE "Line = ", 0
+	TamByte BYTE " Byte = ", 0
 	buffer BYTE "5"
 	bufsize = ($ - buffer)
 	decval DWORD ?
@@ -41,7 +45,8 @@ includelib \Irvine\User32.lib
 	;***************** MAIN **********************
 
     main proc 
-	inicio:	
+		inicio:	
+		CALL saltoLinea
 		CALL printMenu
 		CALL inDataUser
 
@@ -56,14 +61,16 @@ includelib \Irvine\User32.lib
 
 	opcion1:
 		CALL Clrscr
-			mov   edx, OFFSET buffer
-			mov   ecx, bufsize
-			CALL  toBinary
-			mov   decval, EAX
-			CALL WriteBin
 
+			CALL saltoLinea
+			mov EDX, OFFSET ingMemPrincipal
+			CALL WriteString
 			CALL memPrincipal
+			mov EDX, OFFSET ingMemCache
+			CALL WriteString
 			CALL memCache
+			mov EDX, OFFSET ingBloque 
+			CALL WriteString
 			CALL bloque
 
 			;guarda tamaños 
@@ -91,7 +98,14 @@ includelib \Irvine\User32.lib
 		CALL WriteString
 		mov EAX, byteValue
 		CALL WriteInt;
-
+		CALL saltoLinea
+		
+			mov   edx, OFFSET buffer
+			mov   ecx, bufsize
+			CALL  toBinary
+			mov   decval, EAX
+			CALL WriteBin
+			CALL saltoLinea
 		JMP inicio
 	opcion2:
 		je inicio
@@ -336,4 +350,9 @@ LOCAL saveDigit : DWORD
 
 			  L6:	ret
 					toBinary ENDP
+		saltoLinea PROC near
+		mov EDX, OFFSET salto
+		CALL WriteString
+		ret
+		saltoLinea ENDP
 END main
