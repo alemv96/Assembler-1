@@ -24,6 +24,7 @@ includelib \Irvine\User32.lib
 	ingMemCache BYTE "Ingrese tamaño de la memoria Cache", 0dh, 0ah, 0
 	ingBloque BYTE "Ingrese tamaño del Bloque", 0dh, 0ah, 0
 	ingConjunto BYTE "Ingrese el tamaño del conjunto en bloques", 0dh, 0ah, 0
+	ingDireccion BYTE "Ingrese Direccion", 0dh, 0ah, 0
 	entry_Data DWORD ?
 	tamMemoriaPrincipal DWORD ?
 	tamMemCache DWORD ?
@@ -36,9 +37,12 @@ includelib \Irvine\User32.lib
 	Ttag BYTE " Tag = ", 0
 	Tline BYTE "Line = ", 0
 	TamByte BYTE " Byte = ", 0
-	buffer BYTE "5"
+	MAX = 5
+	buffer BYTE MAX + 1 DUP(?)
+	buffer2 BYTE "10"
 	bufsize = ($ - buffer)
 	decval DWORD ?
+	
 	ExitProcess PROTO , dwExitCode: DWORD
  .code 
  
@@ -48,6 +52,7 @@ includelib \Irvine\User32.lib
 
     main proc 
 		inicio:	
+		
 		CALL saltoLinea
 		CALL printMenu
 		CALL inDataUser
@@ -63,7 +68,12 @@ includelib \Irvine\User32.lib
 
 	opcion1:
 		CALL Clrscr
-
+			CALL saltoLinea
+			mov EDX, OFFSET ingDireccion
+			CALL WriteString
+			mov  edx, OFFSET buffer
+			mov  ecx, MAX; buffer size - 1
+			call ReadString
 			CALL saltoLinea
 			mov EDX, OFFSET ingMemPrincipal
 			CALL WriteString
@@ -113,7 +123,12 @@ includelib \Irvine\User32.lib
 		JMP inicio
 	opcion2:
 		CALL Clrscr
-
+			CALL saltoLinea
+			mov EDX, OFFSET ingDireccion
+			CALL WriteString
+			mov  edx, OFFSET buffer
+			mov  ecx, MAX; buffer size - 1
+			call ReadString
 			CALL saltoLinea
 			mov EDX, OFFSET ingMemPrincipal
 			CALL WriteString
