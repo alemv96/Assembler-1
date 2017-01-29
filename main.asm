@@ -23,10 +23,12 @@ includelib \Irvine\User32.lib
 	ingMemPrincipal BYTE "Ingrese tamaño de la memoria Principal", 0dh, 0ah, 0
 	ingMemCache BYTE "Ingrese tamaño de la memoria Cache", 0dh, 0ah, 0
 	ingBloque BYTE "Ingrese tamaño del Bloque", 0dh, 0ah, 0
+	ingConjunto BYTE "Ingrese el tamaño del conjunto en bloques", 0dh, 0ah, 0
 	entry_Data DWORD ?
 	tamMemoriaPrincipal DWORD ?
 	tamMemCache DWORD ?
 	tamBloque DWORD ?
+	tamConjunto DWORD ?
 	tagValue DWORD ?
 	lineValue DWORD ? 
 	byteValue DWORD ?
@@ -106,9 +108,66 @@ includelib \Irvine\User32.lib
 			mov   decval, EAX
 			CALL WriteBin
 			CALL saltoLinea
+			CALL ReadDec
+			CALL Clrscr
 		JMP inicio
 	opcion2:
-		je inicio
+		CALL Clrscr
+
+			CALL saltoLinea
+			mov EDX, OFFSET ingMemPrincipal
+			CALL WriteString
+			CALL memPrincipal
+			mov EDX, OFFSET ingMemCache
+			CALL WriteString
+			CALL memCache
+			mov EDX, OFFSET ingBloque
+			CALL WriteString
+			CALL bloque
+			mov EDX, OFFSET ingConjunto
+			CALL WriteString
+			CALL conjunto
+
+			; guarda tamaños
+
+
+			mov EAX, tamMemCache
+			sub EAX, tamBloque
+			sub EAX, tamConjunto
+			mov lineValue, EAX
+
+			mov EAX, tamBloque
+			mov byteValue, EAX
+
+			mov EAX, tamMemoriaPrincipal
+			sub EAX, lineValue
+			sub EAX, byteValue
+			mov tagValue, EAX
+
+			; imprime tamaños
+			mov EDX, OFFSET Ttag
+			CALL WriteString
+			mov EAX, tagValue
+			CALL WriteInt;
+		mov EDX, OFFSET Tline
+			CALL WriteString
+			mov EAX, lineValue
+			CALL WriteInt;
+		mov EDX, OFFSET TamByte
+			CALL WriteString
+			mov EAX, byteValue
+			CALL WriteInt;
+		CALL saltoLinea
+
+			mov   edx, OFFSET buffer
+			mov   ecx, bufsize
+			CALL  toBinary
+			mov   decval, EAX
+			CALL WriteBin
+			CALL saltoLinea
+			CALL ReadDec
+			CALL Clrscr
+			JMP inicio
 	opcion3:
 		je inicio
 
@@ -266,9 +325,24 @@ includelib \Irvine\User32.lib
 			ret
 	bloque ENDP
 
-	getSizes PROC near
-	ret
-	getSizes ENDP
+	conjunto PROC near
+	CALL inDataUser
+	cmp EAX, 1
+	JE _1
+	cmp EAX, 2
+	JE _2
+	cmp EAX, 3
+	JE _3
+			_1 :
+			mov tamConjunto, 1
+				ret
+			_2 :
+			mov tamConjunto, 2
+				ret
+			_3 :
+			mov tamConjunto, 3
+				ret
+				conjunto ENDP
 
 
 toBinary PROC near USES ebx ecx edx esi
@@ -355,4 +429,5 @@ LOCAL saveDigit : DWORD
 		CALL WriteString
 		ret
 		saltoLinea ENDP
+		
 END main
